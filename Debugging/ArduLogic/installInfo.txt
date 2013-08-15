@@ -1,0 +1,14 @@
+after cloning the source from
+
+	https://github.com/cliffordwolf/ArduLogic.git
+
+run make
+
+	sudo make
+
+if you get errors of Bison and Flex (you don't have them installed), install them:
+
+	sudo apt-get install flex
+	sudo apt-get install bison
+
+
