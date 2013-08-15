@@ -12,6 +12,9 @@
 // has a limited write buffer and long writes beyond the buffer length must be broken 
 // into multiple writes. We will take advantage of this in our code later.
 #include <SPI.h>
+
+  // See a good intro of SPI by Nick Gammon
+  // http://www.gammon.com.au/forum/?id=10892
  
 // For further information, see the SPI Guide for F-RAM
 // http://www.cypress.com/?docID=44520
@@ -26,7 +29,7 @@ const byte CMD_FASTREAD = 0x0A; // 0000 1011 Fast Read Memory Data
 const byte CMD_RDID = 0x9F ; // 1001 1111 Read Device ID
 const byte CMD_SNR= 0xC3 ; // 1100 0011 Read Device S/N
  
-const int FRAM_CS1 = 10; //chip select for memory (2 in Daysimeter v.13)
+const int FRAM_CS1 = 2; //chip select for memory (2 in Daysimeter v.13)
 
 // ------------------------------------------------------
 // WRITE
@@ -64,17 +67,16 @@ const int FRAM_CS1 = 10; //chip select for memory (2 in Daysimeter v.13)
    
     // For EEPROMs, a delay here is suggested while the FRAM should be
     // considerably faster, e.g. http://www.microchip.com/forums/m709262-print.aspx
-    delay(35);
+    // delay(35);
     
     digitalWrite(cs, LOW); // and back LOW before op-code
                            // see Fig. 6 of SPI Guide for F-RAM
                            // http://www.cypress.com/?docID=44520
-    delay(35);
+    //delay(35);
        
-    Serial.print("Write1 RDSR: "); Serial.println(String(SPI.transfer(CMD_RDSR),BIN));
-                           
+    // Serial.print("Write1 RDSR: "); Serial.println(String(SPI.transfer(CMD_RDSR),BIN));                           
     SPI.transfer(CMD_WRITE); //write command
-    Serial.print("Write2 RDSR: "); Serial.println(String(SPI.transfer(CMD_RDSR),BIN));
+    // Serial.print("Write2 RDSR: "); Serial.println(String(SPI.transfer(CMD_RDSR),BIN));
     SPI.transfer(addrMSB);
     // SPI.transfer(secondByte); // for the 2 MBit chip
     SPI.transfer(addrLSB);
@@ -86,6 +88,7 @@ const int FRAM_CS1 = 10; //chip select for memory (2 in Daysimeter v.13)
       }
    
     digitalWrite(cs, HIGH);   
+    delay(10);
     return 0;
   }
  
@@ -121,9 +124,9 @@ const int FRAM_CS1 = 10; //chip select for memory (2 in Daysimeter v.13)
     byte addrLSB = addr & 0xff;
      
     digitalWrite(cs, LOW);
-    delay(35);
+    // delay(35);
     
-    Serial.print("Read RDSR: "); Serial.println(String(SPI.transfer(CMD_RDSR),BIN));
+    // Serial.print("Read RDSR: "); Serial.println(String(SPI.transfer(CMD_RDSR),BIN));
      
     SPI.transfer(CMD_READ);
     SPI.transfer(addrMSB);
@@ -139,6 +142,7 @@ const int FRAM_CS1 = 10; //chip select for memory (2 in Daysimeter v.13)
                                    // with 0x00 compared to 0xFF
                                    // http://forum.arduino.cc/index.php?topic=162242.15
       // Serial.println(buf[i]); 
+      // delay(0.1);
       }
    
     digitalWrite(cs, HIGH);    
@@ -151,23 +155,32 @@ const int FRAM_CS1 = 10; //chip select for memory (2 in Daysimeter v.13)
 // ------------------------------------------------------
  
   void setup()
-  {
-    
-    Serial.begin(9600);  
+  {  
+  
     pinMode(FRAM_CS1, OUTPUT);
     digitalWrite(FRAM_CS1, HIGH);
+    delay(10);
+
    
     // Setting up the SPI bus
     SPI.begin();
     SPI.setDataMode(SPI_MODE0); // FRAMs support 0 and 3
     SPI.setBitOrder(MSBFIRST);
     SPI.setClockDivider(SPI_CLOCK_DIV64); // 8 MHz of system clock
-    
-    // Try to get the Product ID and S/N of the chip
+                                          // SPI Clock was 1 MHz for
+                                          // the Bluetooth in the
+                                          // Red Bear demo
+                                          
+    Serial.begin(115200);  
+    delay(100);
+
+    // Try to get the Product ID and S/N of the chip    
     digitalWrite(FRAM_CS1, LOW);  
     Serial.print("Product ID: "); Serial.println(String(SPI.transfer(CMD_RDID),BIN));
     digitalWrite(FRAM_CS1, HIGH);
+    delay(10);
     
+    /*
     digitalWrite(FRAM_CS1, LOW);  
     Serial.print("S/N: "); Serial.println(String(SPI.transfer(CMD_SNR),BIN));
     digitalWrite(FRAM_CS1, HIGH);
@@ -185,6 +198,8 @@ const int FRAM_CS1 = 10; //chip select for memory (2 in Daysimeter v.13)
     digitalWrite(FRAM_CS1, LOW);
     Serial.print("Setup 2 RDSR: "); Serial.println(String(SPI.transfer(CMD_RDSR),BIN));
     digitalWrite(FRAM_CS1, HIGH);  
+    */
+    
     
   }
  
@@ -202,22 +217,23 @@ const int FRAM_CS1 = 10; //chip select for memory (2 in Daysimeter v.13)
     int bufByte;
     int bufByte2;
        
-    Serial.println(buf);
-    Serial.println(buf2);
+    // Serial.println(buf);
+    // Serial.println(buf2);
      
     // WRITE 
     int writeFlag = FRAMWrite(1, (byte*) buf, 4);
-      delay(20); // delay here suggested, http://www.microchip.com/forums/m709262-print.aspx
+      // delay(20); // delay here suggested, http://www.microchip.com/forums/m709262-print.aspx
     
     // Check the STATUS REGISTER at this point
-    digitalWrite(FRAM_CS1, LOW);
-    Serial.print("After Write RDSR: "); Serial.println(String(SPI.transfer(CMD_RDSR),BIN));
+    //digitalWrite(FRAM_CS1, LOW);
+    // Serial.print("After Write RDSR: "); Serial.println(String(SPI.transfer(CMD_RDSR),BIN));
       // 7: WPEN, 3: BP1, 2: BP0, 1: WEL
-    digitalWrite(FRAM_CS1, HIGH);
+    //digitalWrite(FRAM_CS1, HIGH);
     
     // READ
     int readFlag = FRAMRead(1, (byte*) buf, 4);   
   
+    /*
     Serial.println("CHAR looped");   
     for (int i = 0; i < 4; i++) { 
       Serial.print(i); 
@@ -229,8 +245,13 @@ const int FRAM_CS1 = 10; //chip select for memory (2 in Daysimeter v.13)
       Serial.print(buf[i]);
       Serial.print("\t");
       Serial.println(buf2[i]); // Problem now that only zeroes are returned
-                                // empty (space?) as character
+                                // empty (space?) as character  
+  
     }
+    */
+    
+    
+    
     
     /**
     Serial.println("INT in a loop");
@@ -246,8 +267,8 @@ const int FRAM_CS1 = 10; //chip select for memory (2 in Daysimeter v.13)
       Serial.println(bufByte2); // Problem now that only zeroes are returned
     }
     */
-    Serial.println(" ");
+    //Serial.println(" ");
     
-    delay(2000);
+    //delay(2000);
     
   }
