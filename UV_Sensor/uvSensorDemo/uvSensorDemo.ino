@@ -1,3 +1,4 @@
+
 /*
  Analog Input DEMO for UV Sensor
  Demonstrates analog input by reading an analog sensor on analog pin 0 and
@@ -20,15 +21,21 @@
 int sensorPin = A0;    // select the input pin for the potentiometer
 int ledPin = 3;      // select the pin for the LED
 int sensorValue = 0;  // variable to store the value coming from the sensor
+// int regPin = 5;
 
 void setup() {
   // declare the ledPin as an OUTPUT:
   pinMode(ledPin, OUTPUT); 
+  //pinMode(regPin, OUTPUT); 
+  //digitalWrite(regPin, HIGH);  
   Serial.begin(115200); 
   Serial.println("UV Sensor demo");
 }
 
 void loop() {
+  
+  // digitalWrite(regPin, HIGH); // refresh just in case
+  
   // read the value from the sensor:
   sensorValue = analogRead(sensorPin);    
   // turn the ledPin on
